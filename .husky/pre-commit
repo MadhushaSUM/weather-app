@@ -1,0 +1,33 @@
+#! /usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "Running code quality checks before proceeding with commit..."
+
+# Check Prettier standards
+if ! npm run check-format; then
+    echo "❌ Prettier check failed. Please format your code by running 'npm run format' and try again."
+    exit 1
+fi
+
+# Check ESLint standards
+if ! npm run check-lint; then
+    echo "❌ ESLint check failed. Please address the issues and try again."
+    exit 1
+fi
+
+# Check TypeScript typings
+if ! npm run check-types; then
+    echo "❌ Type check failed. Please resolve the TypeScript issues and try again."
+    exit 1
+fi
+
+# If everything passes, proceed to build
+echo "All checks passed. Now proceeding with build process..."
+
+if ! npm run build; then
+    echo "❌ Build failed. Please view the error messages above to identify and resolve the issues."
+    exit 1
+fi
+
+# If everything is successful, commit
+echo "✅ All checks passed. Your commit is proceeding."
