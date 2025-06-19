@@ -21,6 +21,12 @@ if ! npm run check-types; then
     exit 1
 fi
 
+# Check Unit tests
+if ! npm run test; then
+    echo "❌ Unit tests failed. Please resolve test issues and try again."
+    exit 1
+fi
+
 # If everything passes, proceed to build
 echo "All checks passed. Now proceeding with build process..."
 

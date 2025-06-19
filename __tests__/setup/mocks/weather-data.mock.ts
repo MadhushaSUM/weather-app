@@ -1,0 +1,73 @@
+import { WeatherData } from "@/lib/weather/types/weather.types";
+
+export const mockWeatherData: WeatherData = {
+    location: {
+        name: "London",
+        country: "GB",
+        lat: 51.5074,
+        lon: -0.1278,
+    },
+    current: {
+        temperature: 22,
+        feelsLike: 24,
+        humidity: 65,
+        pressure: 1013,
+        windSpeed: 5.5,
+        windDirection: "SW",
+        visibility: 10,
+        uvIndex: 5,
+        condition: {
+            text: "Partly cloudy",
+            icon: "https://openweathermap.org/img/wn/02d@2x.png",
+            code: 801,
+        },
+    },
+};
+
+export const mockWeatherAPIResponse = {
+    location: {
+        name: "Colombo",
+        region: "Western",
+        country: "Sri Lanka",
+        lat: 6.9319,
+        lon: 79.8478,
+        tz_id: "Asia/Colombo",
+        localtime_epoch: 1750350321,
+        localtime: "2025-06-19 21:55",
+    },
+    current: {
+        last_updated_epoch: 1750349700,
+        last_updated: "2025-06-19 21:45",
+        temp_c: 29.3,
+        temp_f: 84.7,
+        is_day: 0,
+        condition: {
+            text: "Patchy rain nearby",
+            icon: "//cdn.weatherapi.com/weather/64x64/night/176.png",
+            code: 1063,
+        },
+        wind_mph: 10.5,
+        wind_kph: 16.9,
+        wind_degree: 227,
+        wind_dir: "SW",
+        pressure_mb: 1011,
+        pressure_in: 29.85,
+        precip_mm: 0.35,
+        precip_in: 0.01,
+        humidity: 89,
+        cloud: 25,
+        feelslike_c: 37.2,
+        feelslike_f: 98.9,
+        windchill_c: 26.7,
+        windchill_f: 80,
+        heatindex_c: 30.6,
+        heatindex_f: 87,
+        dewpoint_c: 24.4,
+        dewpoint_f: 76,
+        vis_km: 10,
+        vis_miles: 6,
+        uv: 0,
+        gust_mph: 16.2,
+        gust_kph: 26,
+    },
+};
