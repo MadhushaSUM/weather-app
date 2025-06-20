@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { getUserLocation } from "@/lib/geolocation/geolocation";
 import { useCurrentWeather } from "@/hooks/weather/useCurrentWeather";
 import { WeatherSearchParams } from "@/lib/weather/types/weather.types";
+import { useAiTip } from "@/hooks/llm/useAiTip";
 
 const { Header, Content, Footer } = Layout;
 const { Search } = Input;
@@ -38,6 +39,13 @@ export default function Home() {
         error,
         isError,
     } = useCurrentWeather(searchParams);
+
+    const {
+        data: aiTip,
+        isLoading: aiLoading,
+        error: aiError,
+        isError: isAiError,
+    } = useAiTip(weatherData || null);
 
     useEffect(() => {
         /**
@@ -145,6 +153,51 @@ export default function Home() {
         );
     };
 
+    /**
+     * Renders the AI tip section based on the current state.
+     * 1. Shows a loading spinner and message when AI is in the process of generating a tip.
+     * 2. Displays an error alert if there was an issue in generating the AI tip.
+     * 3. Renders the AI-generated tip along with a heading if a valid tip is available.
+     * @returns A React component representing the current state of the Ai tip
+     */
+    const renderAiTip = () => {
+        if (aiLoading) {
+            return (
+                <div className="flex justify-center items-center py-8">
+                    <Spin size="large" />
+                    <Text className="ml-4">Generating AI tip...</Text>
+                </div>
+            )
+        }
+
+        if (isAiError) {
+            return (
+                <Alert
+                    message="Error"
+                    description={
+                        aiError?.message || "Failed to generate AI tip"
+                    }
+                    type="error"
+                    showIcon
+                    className="mt-4"
+                />
+            );
+        }
+
+        if (aiTip) {
+            return (
+                <div className="mt-6">
+                    <Title level={4} className="text-center mb-4">
+                        AI Tip
+                    </Title>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                        <Typography>{aiTip.suggestion}</Typography>
+                    </div>
+                </div>
+            )
+        }
+    }
+
     return (
         <Layout>
             <Header style={{ display: "flex", alignItems: "center" }}>
@@ -181,7 +234,10 @@ export default function Home() {
                                 />
                             </AutoComplete>
                         </div>
-                        <div className="mt-4">{renderWeatherContent()}</div>
+                        <div className="mt-4">
+                            {renderWeatherContent()}
+                            {renderAiTip()}
+                        </div>
                     </div>
                 </Card>
             </Content>
