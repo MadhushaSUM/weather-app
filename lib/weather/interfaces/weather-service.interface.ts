@@ -16,16 +16,19 @@ export abstract class BaseWeatherService implements IWeatherService {
     ): Promise<WeatherData>;
 
     /**
-     * 401 error for Invalid API keys and 404 for if the location searched is not found
+     * 401 error for Invalid API keys and 400 for if the location searched is not found
      * @param error
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     protected handleError(error: any): never {
-        if (error.response?.status === 401) {
+        if (error.message.includes("HTTP Error: 400")) {
+            throw new Error("Location not found");
+        }
+        if (error.message.includes("HTTP Error: 401")) {
             throw new Error("Invalid API key");
         }
-        if (error.response?.status === 404) {
-            throw new Error("Location not found");
+        if (error.message.includes("HTTP Error: 502")) {
+            throw new Error("Service unavailable. Try again later");
         }
         throw new Error(error.message || "Weather service error");
     }

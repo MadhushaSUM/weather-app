@@ -37,6 +37,4 @@ export interface WeatherForecast {
 
 export interface WeatherSearchParams {
     query: string;
-    days?: number;
-    includeAirQuality?: boolean;
 }

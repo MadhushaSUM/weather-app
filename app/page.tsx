@@ -1,106 +1,193 @@
-import Image from "next/image";
+"use client";
+
+import {
+    Layout,
+    Card,
+    AutoComplete,
+    Input,
+    Typography,
+    Alert,
+    Spin,
+} from "antd";
+import { useEffect, useState } from "react";
+import { getUserLocation } from "@/lib/geolocation/geolocation";
+import { useCurrentWeather } from "@/hooks/weather/useCurrentWeather";
+import { WeatherSearchParams } from "@/lib/weather/types/weather.types";
+
+const { Header, Content, Footer } = Layout;
+const { Search } = Input;
+const { Text, Title } = Typography;
+
+const options = [
+    { value: "Colombo" },
+    { value: "Mumbai" },
+    { value: "New York" },
+];
 
 /**
  * Default home page
  */
 export default function Home() {
-    return (
-        <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-            <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-                <Image
-                    className="dark:invert"
-                    src="/next.svg"
-                    alt="Next.js logo"
-                    width={180}
-                    height={38}
-                    priority
-                />
-                <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-                    <li className="mb-2 tracking-[-.01em]">
-                        Get started by editing{" "}
-                        <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-                            app/page.tsx
-                        </code>
-                        .
-                    </li>
-                    <li className="tracking-[-.01em]">
-                        Save and see your changes instantly.
-                    </li>
-                </ol>
+    const [searchParams, setSearchParams] =
+        useState<WeatherSearchParams | null>(null);
+    const [location, setLocation] = useState<string | null>(null);
 
-                <div className="flex gap-4 items-center flex-col sm:flex-row">
-                    <a
-                        className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-                        href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <Image
-                            className="dark:invert"
-                            src="/vercel.svg"
-                            alt="Vercel logomark"
-                            width={20}
-                            height={20}
-                        />
-                        Deploy now
-                    </a>
-                    <a
-                        className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-                        href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        Read our docs
-                    </a>
+    const {
+        data: weatherData,
+        isLoading,
+        error,
+        isError,
+    } = useCurrentWeather(searchParams);
+
+    useEffect(() => {
+        /**
+         * Retrieves the user's current weather information based on their geolocation.
+         * If the user's location cannot be determined (due to permission denial or another error),
+         * defaults to retrieving weather information for Colombo.
+         * @returns A promise that resolves once the search parameters for the weather query are set.
+         */
+        const getWeather = async () => {
+            try {
+                const position = await getUserLocation();
+                setSearchParams({
+                    query:
+                        position.coords.latitude +
+                        "," +
+                        position.coords.longitude,
+                });
+            } catch (error) {
+                // Permission denied or location failed
+                setLocation(
+                    process.env.NEXT_PUBLIC_DEFAULT_LOCATION || "Colombo"
+                );
+                setSearchParams({
+                    query:
+                        process.env.NEXT_PUBLIC_DEFAULT_LOCATION || "Colombo",
+                });
+                console.log(error);
+            }
+        };
+
+        getWeather();
+    }, []);
+
+    /**
+     * Handles selection logic by updating the location and search parameters.
+     * @param {string} value - The selected value to be processed.
+     */
+    const handleSelect = (value: string) => {
+        setLocation(value);
+        setSearchParams({ query: value });
+    };
+
+    /**
+     * Clears the current location and search parameters.
+     */
+    const handleClear = () => {
+        setLocation(null);
+        setSearchParams(null);
+    };
+
+    /**
+     * 1. Displays a loading spinner with a message when data is being loaded (`isLoading`).
+     * 2. Shows an error alert when there is a failure to fetch weather data (`isError`).
+     * 3. Displays weather information if the `weatherData` is successfully fetched along with the location name.
+     * 4. Returns a default message prompting the user to enter a location if no activity is detected.
+     * @returns A React component representing the current state of the weather data.
+     */
+    const renderWeatherContent = () => {
+        if (isLoading) {
+            return (
+                <div className="flex justify-center items-center py-8">
+                    <Spin size="large" />
+                    <Text className="ml-4">Loading weather data...</Text>
                 </div>
-            </main>
-            <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-                <a
-                    className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-                    href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    <Image
-                        aria-hidden
-                        src="/file.svg"
-                        alt="File icon"
-                        width={16}
-                        height={16}
-                    />
-                    Learn
-                </a>
-                <a
-                    className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-                    href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    <Image
-                        aria-hidden
-                        src="/window.svg"
-                        alt="Window icon"
-                        width={16}
-                        height={16}
-                    />
-                    Examples
-                </a>
-                <a
-                    className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-                    href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    <Image
-                        aria-hidden
-                        src="/globe.svg"
-                        alt="Globe icon"
-                        width={16}
-                        height={16}
-                    />
-                    Go to nextjs.org →
-                </a>
-            </footer>
-        </div>
+            );
+        }
+
+        if (isError) {
+            return (
+                <Alert
+                    message="Error"
+                    description={
+                        error?.message || "Failed to fetch weather data"
+                    }
+                    type="error"
+                    showIcon
+                    className="mt-4"
+                />
+            );
+        }
+
+        if (weatherData) {
+            return (
+                <div className="mt-6">
+                    <Title level={4} className="text-center mb-4">
+                        Weather in {location}
+                    </Title>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                        <Typography>
+                            <pre className="text-sm overflow-auto">
+                                {JSON.stringify(weatherData, null, 2)}
+                            </pre>
+                        </Typography>
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div className="text-center py-8">
+                <Text type="secondary">
+                    Enter a location to get weather information
+                </Text>
+            </div>
+        );
+    };
+
+    return (
+        <Layout>
+            <Header style={{ display: "flex", alignItems: "center" }}>
+                <div className="text-white w-full flex justify-center font-bold text-2xl">
+                    Weather App
+                </div>
+            </Header>
+            <Content
+                style={{ padding: "48px", minHeight: "calc(100vh - 134px)" }}
+            >
+                <Card hoverable>
+                    <div className="flex flex-col items-center">
+                        <div className="sm:w-96 mb-4 flex justify-center">
+                            <AutoComplete
+                                className=""
+                                options={options}
+                                placeholder="Enter a location"
+                                value={location}
+                                onChange={setLocation}
+                                filterOption={(inputValue, option) =>
+                                    option!.value
+                                        .toUpperCase()
+                                        .indexOf(inputValue.toUpperCase()) !==
+                                    -1
+                                }
+                                onSelect={handleSelect}
+                                onClear={handleClear}
+                            >
+                                <Search
+                                    enterButton
+                                    allowClear
+                                    onSearch={handleSelect}
+                                    loading={isLoading}
+                                />
+                            </AutoComplete>
+                        </div>
+                        <div className="mt-4">{renderWeatherContent()}</div>
+                    </div>
+                </Card>
+            </Content>
+            <Footer style={{ textAlign: "center" }}>
+                Created by Madhusha Laksitha
+            </Footer>
+        </Layout>
     );
 }
