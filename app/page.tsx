@@ -1,50 +1,42 @@
 "use client";
 
-import {
-    Layout,
-    Card,
-    AutoComplete,
-    Input,
-    Typography,
-    Alert,
-    Spin,
-} from "antd";
-import { useEffect, useState } from "react";
-import { getUserLocation } from "@/lib/geolocation/geolocation";
+import React, { useState, useEffect } from "react";
+import { ConfigProvider, theme } from "antd";
+import { WeatherHeader } from "@/components/weather/WeatherHeader";
+import { WeatherHero } from "@/components/weather/WeatherHero";
+import { WeatherMetrics } from "@/components/weather/WeatherMetrics";
+import { WeatherDetails } from "@/components/weather/WeatherDetails";
+import { AiTipCard } from "@/components/weather/AiTipCard";
+import { LoadingSkeleton } from "@/components/weather/LoadingSkeleton";
+import { ErrorCard } from "@/components/weather/ErrorCard";
+import { ThemeProvider } from "@/components/weather/ThemeProvider";
 import { useCurrentWeather } from "@/hooks/weather/useCurrentWeather";
-import { WeatherSearchParams } from "@/lib/weather/types/weather.types";
 import { useAiTip } from "@/hooks/llm/useAiTip";
-
-const { Header, Content, Footer } = Layout;
-const { Search } = Input;
-const { Text, Title } = Typography;
-
-const options = [
-    { value: "Colombo" },
-    { value: "Mumbai" },
-    { value: "New York" },
-];
+import { getUserLocation } from "@/lib/geolocation/geolocation";
+import { WeatherSearchParams } from "@/lib/weather/types/weather.types";
 
 /**
- * Default home page
+ * Home page of the web app
  */
-export default function Home() {
+export default function WeatherPage() {
+    const [isDarkMode, setIsDarkMode] = useState(false);
     const [searchParams, setSearchParams] =
         useState<WeatherSearchParams | null>(null);
-    const [location, setLocation] = useState<string | null>(null);
 
     const {
         data: weatherData,
-        isLoading,
-        error,
-        isError,
+        isLoading: isWeatherLoading,
+        error: weatherError,
+        isError: isWeatherError,
+        refetch: refetchWeather,
     } = useCurrentWeather(searchParams);
 
     const {
         data: aiTip,
-        isLoading: aiLoading,
+        isLoading: isAiLoading,
         error: aiError,
         isError: isAiError,
+        refetch: refetchAiTip,
     } = useAiTip(weatherData || null);
 
     useEffect(() => {
@@ -65,9 +57,6 @@ export default function Home() {
                 });
             } catch (error) {
                 // Permission denied or location failed
-                setLocation(
-                    process.env.NEXT_PUBLIC_DEFAULT_LOCATION || "Colombo"
-                );
                 setSearchParams({
                     query:
                         process.env.NEXT_PUBLIC_DEFAULT_LOCATION || "Colombo",
@@ -79,171 +68,193 @@ export default function Home() {
         getWeather();
     }, []);
 
+    // Load theme preference
+    useEffect(() => {
+        const savedTheme = localStorage.getItem("weather-theme");
+        if (savedTheme) {
+            setIsDarkMode(savedTheme === "dark");
+        } else {
+            // Check system preference
+            const prefersDark = window.matchMedia(
+                "(prefers-color-scheme: dark)"
+            ).matches;
+            setIsDarkMode(prefersDark);
+        }
+    }, []);
+
     /**
-     * Handles selection logic by updating the location and search parameters.
-     * @param {string} value - The selected value to be processed.
+     * Toggles the theme between dark mode and light mode.
+     * Updates the state indicator for dark mode and stores the current theme
+     * preference in the local storage.
      */
-    const handleSelect = (value: string) => {
-        setLocation(value);
-        setSearchParams({ query: value });
+    const toggleTheme = () => {
+        const newTheme = !isDarkMode;
+        setIsDarkMode(newTheme);
+        localStorage.setItem("weather-theme", newTheme ? "dark" : "light");
     };
 
     /**
-     * Clears the current location and search parameters.
+     * Updates the search parameters for the current location.
      */
-    const handleClear = () => {
-        setLocation(null);
-        setSearchParams(null);
+    const handleLocationSearch = (location: string) => {
+        setSearchParams({ query: location });
     };
 
     /**
-     * 1. Displays a loading spinner with a message when data is being loaded (`isLoading`).
-     * 2. Shows an error alert when there is a failure to fetch weather data (`isError`).
-     * 3. Displays weather information if the `weatherData` is successfully fetched along with the location name.
-     * 4. Returns a default message prompting the user to enter a location if no activity is detected.
-     * @returns A React component representing the current state of the weather data.
+     * This function triggers a refresh process for weather and AI tip data.
+     * First calls the `refetchWeather` function to get updated weather info.
+     * If the `weatherData` is available, it proceeds to call the `refetchAiTip` function
+     * to fetch updated AI-generated tips related to the weather.
      */
-    const renderWeatherContent = () => {
-        if (isLoading) {
-            return (
-                <div className="flex justify-center items-center py-8">
-                    <Spin size="large" />
-                    <Text className="ml-4">Loading weather data...</Text>
-                </div>
-            );
-        }
-
-        if (isError) {
-            return (
-                <Alert
-                    message="Error"
-                    description={
-                        error?.message || "Failed to fetch weather data"
-                    }
-                    type="error"
-                    showIcon
-                    className="mt-4"
-                />
-            );
-        }
-
+    const handleRefresh = () => {
+        refetchWeather();
         if (weatherData) {
-            return (
-                <div className="mt-6">
-                    <Title level={4} className="text-center mb-4">
-                        Weather in {location}
-                    </Title>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <Typography>
-                            <pre className="text-sm overflow-auto">
-                                {JSON.stringify(weatherData, null, 2)}
-                            </pre>
-                        </Typography>
-                    </div>
-                </div>
-            );
+            refetchAiTip();
         }
-
-        return (
-            <div className="text-center py-8">
-                <Text type="secondary">
-                    Enter a location to get weather information
-                </Text>
-            </div>
-        );
     };
 
-    /**
-     * Renders the AI tip section based on the current state.
-     * 1. Shows a loading spinner and message when AI is in the process of generating a tip.
-     * 2. Displays an error alert if there was an issue in generating the AI tip.
-     * 3. Renders the AI-generated tip along with a heading if a valid tip is available.
-     * @returns A React component representing the current state of the Ai tip
-     */
-    const renderAiTip = () => {
-        if (aiLoading) {
-            return (
-                <div className="flex justify-center items-center py-8">
-                    <Spin size="large" />
-                    <Text className="ml-4">Generating AI tip...</Text>
-                </div>
-            )
-        }
-
-        if (isAiError) {
-            return (
-                <Alert
-                    message="Error"
-                    description={
-                        aiError?.message || "Failed to generate AI tip"
-                    }
-                    type="error"
-                    showIcon
-                    className="mt-4"
-                />
-            );
-        }
-
-        if (aiTip) {
-            return (
-                <div className="mt-6">
-                    <Title level={4} className="text-center mb-4">
-                        AI Tip
-                    </Title>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <Typography>{aiTip.suggestion}</Typography>
+    if (isWeatherError) {
+        return (
+            <ThemeProvider isDarkMode={isDarkMode}>
+                <ConfigProvider
+                    theme={{
+                        algorithm: isDarkMode
+                            ? theme.darkAlgorithm
+                            : theme.defaultAlgorithm,
+                    }}
+                >
+                    <div className="min-h-screen bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900">
+                        <div className="container mx-auto px-4 py-6">
+                            <WeatherHeader
+                                onLocationSearch={handleLocationSearch}
+                                onRefresh={handleRefresh}
+                                onThemeToggle={toggleTheme}
+                                isDarkMode={isDarkMode}
+                                isLoading={isWeatherLoading}
+                            />
+                            <div className="mt-8">
+                                <ErrorCard
+                                    error={weatherError}
+                                    onRetry={handleRefresh}
+                                    type="weather"
+                                />
+                            </div>
+                        </div>
                     </div>
-                </div>
-            )
-        }
+                </ConfigProvider>
+            </ThemeProvider>
+        );
     }
 
     return (
-        <Layout>
-            <Header style={{ display: "flex", alignItems: "center" }}>
-                <div className="text-white w-full flex justify-center font-bold text-2xl">
-                    Weather App
-                </div>
-            </Header>
-            <Content
-                style={{ padding: "48px", minHeight: "calc(100vh - 134px)" }}
+        <ThemeProvider isDarkMode={isDarkMode}>
+            <ConfigProvider
+                theme={{
+                    algorithm: isDarkMode
+                        ? theme.darkAlgorithm
+                        : theme.defaultAlgorithm,
+                }}
             >
-                <Card hoverable>
-                    <div className="flex flex-col items-center">
-                        <div className="sm:w-96 mb-4 flex justify-center">
-                            <AutoComplete
-                                className=""
-                                options={options}
-                                placeholder="Enter a location"
-                                value={location}
-                                onChange={setLocation}
-                                filterOption={(inputValue, option) =>
-                                    option!.value
-                                        .toUpperCase()
-                                        .indexOf(inputValue.toUpperCase()) !==
-                                    -1
-                                }
-                                onSelect={handleSelect}
-                                onClear={handleClear}
-                            >
-                                <Search
-                                    enterButton
-                                    allowClear
-                                    onSearch={handleSelect}
-                                    loading={isLoading}
-                                />
-                            </AutoComplete>
-                        </div>
-                        <div className="mt-4">
-                            {renderWeatherContent()}
-                            {renderAiTip()}
-                        </div>
+                <div
+                    className={`min-h-screen transition-all duration-500 ${
+                        weatherData
+                            ? getWeatherGradient(
+                                  weatherData.current.condition.code,
+                                  isDarkMode
+                              )
+                            : "bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900"
+                    }`}
+                >
+                    <div className="container mx-auto px-4 py-6 max-w-7xl">
+                        <WeatherHeader
+                            onLocationSearch={handleLocationSearch}
+                            onRefresh={handleRefresh}
+                            onThemeToggle={toggleTheme}
+                            isDarkMode={isDarkMode}
+                            isLoading={isWeatherLoading}
+                            location={weatherData?.location}
+                        />
+
+                        {isWeatherLoading ? (
+                            <LoadingSkeleton />
+                        ) : weatherData ? (
+                            <div className="space-y-6 mt-8">
+                                {/* Hero Section */}
+                                <WeatherHero weatherData={weatherData} />
+
+                                {/* Main Metrics Grid */}
+                                <WeatherMetrics weatherData={weatherData} />
+
+                                {/* AI Tip Section */}
+                                {(aiTip || isAiLoading || isAiError) && (
+                                    <AiTipCard
+                                        tip={aiTip?.suggestion || null}
+                                        isLoading={isAiLoading}
+                                        error={isAiError ? aiError : null}
+                                        onRetry={refetchAiTip}
+                                        weatherCondition={
+                                            weatherData.current.condition.text
+                                        }
+                                    />
+                                )}
+
+                                {/* Detailed Weather Information */}
+                                <WeatherDetails weatherData={weatherData} />
+                            </div>
+                        ) : null}
                     </div>
-                </Card>
-            </Content>
-            <Footer style={{ textAlign: "center" }}>
-                Created by Madhusha Laksitha
-            </Footer>
-        </Layout>
+                </div>
+            </ConfigProvider>
+        </ThemeProvider>
     );
+}
+
+/**
+ * Generates a gradient class string based on the weather condition code and theme mode (dark or light).
+ */
+function getWeatherGradient(
+    conditionCode: number,
+    isDarkMode: boolean
+): string {
+    const baseClasses = "bg-gradient-to-br transition-all duration-1000";
+
+    if (isDarkMode) {
+        // Dark mode gradients
+        if (conditionCode >= 1000 && conditionCode <= 1003) {
+            // Clear/Partly Cloudy
+            return `${baseClasses} from-slate-900 via-blue-900 to-indigo-900`;
+        } else if (conditionCode >= 1006 && conditionCode <= 1030) {
+            // Cloudy/Overcast
+            return `${baseClasses} from-gray-900 via-slate-800 to-gray-700`;
+        } else if (conditionCode >= 1180 && conditionCode <= 1201) {
+            // Rain
+            return `${baseClasses} from-slate-900 via-blue-800 to-cyan-800`;
+        } else if (conditionCode >= 1210 && conditionCode <= 1237) {
+            // Snow
+            return `${baseClasses} from-slate-900 via-blue-900 to-slate-700`;
+        } else if (conditionCode >= 1273 && conditionCode <= 1282) {
+            // Thunderstorm
+            return `${baseClasses} from-gray-900 via-purple-900 to-indigo-900`;
+        }
+        return `${baseClasses} from-gray-900 via-blue-900 to-purple-900`;
+    } else {
+        // Light mode gradients
+        if (conditionCode >= 1000 && conditionCode <= 1003) {
+            // Clear/Partly Cloudy
+            return `${baseClasses} from-blue-400 via-cyan-400 to-blue-500`;
+        } else if (conditionCode >= 1006 && conditionCode <= 1030) {
+            // Cloudy/Overcast
+            return `${baseClasses} from-gray-400 via-slate-500 to-gray-600`;
+        } else if (conditionCode >= 1180 && conditionCode <= 1201) {
+            // Rain
+            return `${baseClasses} from-blue-500 via-indigo-500 to-purple-600`;
+        } else if (conditionCode >= 1210 && conditionCode <= 1237) {
+            // Snow
+            return `${baseClasses} from-blue-200 via-cyan-300 to-blue-400`;
+        } else if (conditionCode >= 1273 && conditionCode <= 1282) {
+            // Thunderstorm
+            return `${baseClasses} from-gray-600 via-purple-600 to-indigo-700`;
+        }
+        return `${baseClasses} from-blue-400 via-purple-500 to-pink-500`;
+    }
 }
