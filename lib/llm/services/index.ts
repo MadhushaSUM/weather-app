@@ -19,7 +19,7 @@ export class LLMServiceFactory {
             case "openai":
                 return new OpenAILLMService(apiKey);
             default:
-                throw new Error(`Unsupported weather provider: ${provider}`);
+                throw new Error(`Unsupported llm provider: ${provider}`);
         }
     }
 }

@@ -1,5 +1,9 @@
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const nextJest = require("next/jest");
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { pathsToModuleNameMapper } = require("ts-jest");
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { compilerOptions } = require("./tsconfig.json");
 
 const createJestConfig = nextJest({
     dir: "./",
@@ -25,6 +29,10 @@ const customJestConfig = {
         },
     },
     testMatch: ["<rootDir>/__tests__/**/*.test.{js,jsx,ts,tsx}"],
+
+    moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {
+        prefix: "<rootDir>/",
+    }),
 };
 
 module.exports = createJestConfig(customJestConfig);

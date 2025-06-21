@@ -2,24 +2,24 @@ import { WeatherData } from "@/lib/weather/types/weather.types";
 
 export const mockWeatherData: WeatherData = {
     location: {
-        name: "London",
-        country: "GB",
-        lat: 51.5074,
-        lon: -0.1278,
+        name: "Colombo",
+        country: "Sri Lanka",
+        lat: 6.9319,
+        lon: 79.8478,
     },
     current: {
-        temperature: 22,
-        feelsLike: 24,
-        humidity: 65,
-        pressure: 1013,
-        windSpeed: 5.5,
+        temperature: 29,
+        feelsLike: 37,
+        humidity: 89,
+        pressure: 29.85,
+        windSpeed: 16.9,
         windDirection: "SW",
         visibility: 10,
-        uvIndex: 5,
+        uvIndex: 0,
         condition: {
-            text: "Partly cloudy",
-            icon: "https://openweathermap.org/img/wn/02d@2x.png",
-            code: 801,
+            text: "Patchy rain nearby",
+            icon: "//cdn.weatherapi.com/weather/64x64/night/176.png",
+            code: 1063,
         },
     },
 };

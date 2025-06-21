@@ -42,7 +42,6 @@ export class OpenAILLMService extends BaseLLMService {
                 suggestion: response.output_text,
             };
         } catch (error) {
-            console.error(error);
             throw error;
         }
     }
