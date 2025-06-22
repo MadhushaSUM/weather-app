@@ -99,18 +99,24 @@ export const WeatherHero: React.FC<WeatherHeroProps> = ({ weatherData }) => {
                             {location.country}
                         </Text>
                         <Text className="text-white/60 text-base">
-                            {new Date().toLocaleDateString("en-US", {
-                                weekday: "long",
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                            })}
+                            {new Date(location.localtime).toLocaleDateString(
+                                "en-US",
+                                {
+                                    weekday: "long",
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                }
+                            )}
                         </Text>
                         <Text className="text-white/60 text-sm block">
-                            {new Date().toLocaleTimeString("en-US", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                            })}
+                            {new Date(location.localtime).toLocaleTimeString(
+                                "en-US",
+                                {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                }
+                            )}
                         </Text>
                     </div>
                 </div>

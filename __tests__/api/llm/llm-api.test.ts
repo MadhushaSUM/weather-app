@@ -63,6 +63,7 @@ const mockWeatherData: WeatherData = {
         country: "United Kingdom",
         lat: 51.52,
         lon: -0.11,
+        localtime: "2025-06-22 23:14",
     },
     current: {
         temperature: 59.0,
