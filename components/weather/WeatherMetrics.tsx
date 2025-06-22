@@ -45,7 +45,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
     };
 
     return (
-        <Card className="!bg-white/10 !border-white/20 backdrop-blur-lg hover:!bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-xl">
+        <Card className="!bg-white/10 !border-white/20 backdrop-blur-lg hover:!bg-white/15 transition-all duration-300 hover:scale-105 hover:shadow-xl h-full">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
                     <div className="p-2 bg-white/20 rounded-lg">{icon}</div>

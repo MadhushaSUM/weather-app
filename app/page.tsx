@@ -178,7 +178,7 @@ export default function WeatherPage() {
                         {isWeatherLoading ? (
                             <LoadingSkeleton />
                         ) : weatherData ? (
-                            <div className="space-y-6 mt-8">
+                            <div className="space-y-6 mt-8 flex flex-col gap-5">
                                 {/* Hero Section */}
                                 <WeatherHero weatherData={weatherData} />
 
