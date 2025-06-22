@@ -22,6 +22,7 @@ describe("LLM Integration - Factory + OpenAILLMService", () => {
             country: "USA",
             lat: 40.7128,
             lon: -74.006,
+            localtime: "2025-06-22 23:14",
         },
         current: {
             temperature: 25,

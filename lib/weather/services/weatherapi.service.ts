@@ -102,6 +102,7 @@ export class WeatherAPIService extends BaseWeatherService {
                 country: response.location.country,
                 lat: response.location.lat,
                 lon: response.location.lon,
+                localtime: response.location.localtime,
             },
             current: {
                 temperature: Math.round(response.current.temp_c),

@@ -20,6 +20,7 @@ describe("OpenAILLMService", () => {
             country: "UK",
             lat: 51.5074,
             lon: -0.1278,
+            localtime: "2025-06-22 23:14",
         },
         current: {
             temperature: 22,

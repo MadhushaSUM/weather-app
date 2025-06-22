@@ -6,6 +6,7 @@ export const mockWeatherData: WeatherData = {
         country: "Sri Lanka",
         lat: 6.9319,
         lon: 79.8478,
+        localtime: "2025-06-19 21:55",
     },
     current: {
         temperature: 29,
