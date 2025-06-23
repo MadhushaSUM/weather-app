@@ -1,5 +1,9 @@
 import { BaseWeatherService } from "../interfaces/weather-service.interface";
-import { WeatherData, WeatherSearchParams } from "../types/weather.types";
+import {
+    WeatherData,
+    WeatherForecast,
+    WeatherSearchParams,
+} from "../types/weather.types";
 import { HttpClient } from "../../http/http-client";
 
 interface WeatherAPIResponse {
@@ -50,6 +54,67 @@ interface WeatherAPIResponse {
     };
 }
 
+export interface ForecastHourData {
+    time_epoch: number;
+    time: string;
+    temp_c: number;
+    temp_f: number;
+    condition: {
+        text: string;
+        icon: string;
+        code: number;
+    };
+    wind_mph: number;
+    wind_kph: number;
+    wind_degree: number;
+    wind_dir: string;
+    pressure_mb: number;
+    pressure_in: number;
+    precip_mm: number;
+    precip_in: number;
+    snow_cm: number;
+    humidity: number;
+    cloud: number;
+    feelslike_c: number;
+    feelslike_f: number;
+    windchill_c: number;
+    windchill_f: number;
+    heatindex_c: number;
+    heatindex_f: number;
+    dewpoint_c: number;
+    dewpoint_f: number;
+    will_it_rain: number;
+    will_it_snow: number;
+    is_day: number;
+    vis_km: number;
+    vis_miles: number;
+    chance_of_rain: number;
+    chance_of_snow: number;
+    gust_mph: number;
+    gust_kph: number;
+    uv: number; // Optional for the same reason
+    air_quality?: {
+        co: number;
+        no2: number;
+        o3: number;
+        so2: number;
+        pm2_5: number;
+        pm10: number;
+        us_epa_index: number;
+        gb_defra_index: number;
+    };
+}
+
+interface ForecastAPIResponse {
+    forecast: {
+        forecastday: Array<{
+            date: string;
+            date_epoch: number;
+            hour: ForecastHourData[];
+        }>;
+    };
+}
+
 /**
  * Implementation for WeatherAPI service provider.
  */
@@ -70,11 +135,22 @@ export class WeatherAPIService extends BaseWeatherService {
     }
 
     /**
+     * Fetches and combines current weather data and forecast data based on the provided search parameters.
+     */
+    async getWeatherData(params: WeatherSearchParams): Promise<WeatherData> {
+        const weatherData = await this.getCurrentWeather(params);
+        weatherData.forecast = await this.getForecast(params);
+        return weatherData;
+    }
+
+    /**
      * Gets current weather data for provided parameters
      * @param params WeatherSearchParams
      * @returns WeatherData
      */
-    async getCurrentWeather(params: WeatherSearchParams): Promise<WeatherData> {
+    private async getCurrentWeather(
+        params: WeatherSearchParams
+    ): Promise<WeatherData> {
         try {
             const response = await this.httpClient.get<WeatherAPIResponse>(
                 "/current.json",
@@ -84,18 +160,43 @@ export class WeatherAPIService extends BaseWeatherService {
                 }
             );
 
-            return this.transformResponse(response);
+            return this.transformCurrentResponse(response);
         } catch (error) {
             return this.handleError(error);
         }
     }
 
     /**
-     * Transform data received from WeatherAPI service to WeatherData type
+     * Gets weather forecast data for provided parameters
+     * @param params WeatherSearchParams
+     * @returns WeatherData
+     */
+    private async getForecast(
+        params: WeatherSearchParams
+    ): Promise<WeatherForecast> {
+        try {
+            const response = await this.httpClient.get<ForecastAPIResponse>(
+                "/forecast.json",
+                {
+                    q: params.query,
+                    key: this.apiKey,
+                }
+            );
+
+            return this.transformForecastResponse(response);
+        } catch (error) {
+            return this.handleError(error);
+        }
+    }
+
+    /**
+     * Transform current weather data received from WeatherAPI service to WeatherData type
      * @param response
      * @returns
      */
-    private transformResponse(response: WeatherAPIResponse): WeatherData {
+    private transformCurrentResponse(
+        response: WeatherAPIResponse
+    ): WeatherData {
         return {
             location: {
                 name: response.location.name,
@@ -119,6 +220,32 @@ export class WeatherAPIService extends BaseWeatherService {
                     code: response.current.condition.code,
                 },
             },
+        };
+    }
+
+    /**
+     * Transform forecast weather data received from WeatherAPI service to WeatherForecast type
+     */
+    private transformForecastResponse(
+        response: ForecastAPIResponse
+    ): WeatherForecast {
+        const forecastDay = response.forecast.forecastday[0];
+
+        return {
+            date: forecastDay.date,
+            hour: forecastDay.hour.map((hourData) => ({
+                time: hourData.time,
+                temperature: hourData.temp_c,
+                humidity: hourData.humidity,
+                feelsLike: hourData.feelslike_c,
+                chance_of_rain: hourData.chance_of_rain,
+                chance_of_snow: hourData.chance_of_snow,
+                condition: {
+                    text: hourData.condition.text,
+                    icon: hourData.condition.icon,
+                    code: hourData.condition.code,
+                },
+            })),
         };
     }
 }

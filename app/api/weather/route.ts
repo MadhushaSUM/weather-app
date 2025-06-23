@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
             env.WEATHER_API_KEY
         );
 
-        const weatherData = await weatherService.getCurrentWeather(params);
+        const weatherData = await weatherService.getWeatherData(params);
 
         return NextResponse.json(weatherData);
     } catch (error) {

@@ -14,6 +14,7 @@ import { useCurrentWeather } from "@/hooks/weather/useCurrentWeather";
 import { useAiTip } from "@/hooks/llm/useAiTip";
 import { getUserLocation } from "@/lib/geolocation/geolocation";
 import { WeatherSearchParams } from "@/lib/weather/types/weather.types";
+import { WeatherForecast } from "@/components/weather/WeatherForecast";
 
 /**
  * Home page of the web app
@@ -194,6 +195,17 @@ export default function WeatherPage() {
                                         onRetry={refetchAiTip}
                                         weatherCondition={
                                             weatherData.current.condition.text
+                                        }
+                                    />
+                                )}
+
+                                {/* Weather Forecast Information */}
+                                {weatherData.forecast && (
+                                    <WeatherForecast
+                                        forecastDate={weatherData.forecast.date}
+                                        hourlyData={weatherData.forecast.hour}
+                                        currentTimeISO={
+                                            weatherData.location.localtime
                                         }
                                     />
                                 )}
