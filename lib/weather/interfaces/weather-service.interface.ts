@@ -1,7 +1,7 @@
 import { WeatherData, WeatherSearchParams } from "../types/weather.types";
 
 export interface IWeatherService {
-    getCurrentWeather(params: WeatherSearchParams): Promise<WeatherData>;
+    getWeatherData(params: WeatherSearchParams): Promise<WeatherData>;
 }
 
 /**
@@ -11,9 +11,7 @@ export abstract class BaseWeatherService implements IWeatherService {
     protected abstract apiKey: string;
     protected abstract baseUrl: string;
 
-    abstract getCurrentWeather(
-        params: WeatherSearchParams
-    ): Promise<WeatherData>;
+    abstract getWeatherData(params: WeatherSearchParams): Promise<WeatherData>;
 
     /**
      * 401 error for Invalid API keys and 400 for if the location searched is not found

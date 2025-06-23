@@ -21,19 +21,24 @@ export interface WeatherData {
             code: number;
         };
     };
-    forecast?: WeatherForecast[];
+    forecast?: WeatherForecast;
 }
 
 export interface WeatherForecast {
     date: string;
-    maxTemp: number;
-    minTemp: number;
-    condition: {
-        text: string;
-        icon: string;
-        code: number;
-    };
-    chanceOfRain: number;
+    hour: {
+        time: string;
+        temperature: number;
+        humidity: number;
+        feelsLike: number;
+        chance_of_rain: number;
+        chance_of_snow: number;
+        condition: {
+            text: string;
+            icon: string;
+            code: number;
+        };
+    }[];
 }
 
 export interface WeatherSearchParams {

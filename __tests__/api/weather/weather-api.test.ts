@@ -25,7 +25,7 @@ const mockWeatherServiceFactory = WeatherServiceFactory as jest.Mocked<
 const mockValidateEnv = validateEnv as jest.MockedFunction<typeof validateEnv>;
 
 const mockWeatherService = {
-    getCurrentWeather: jest.fn(),
+    getWeatherData: jest.fn(),
 };
 
 const originalConsoleError = console.error;
@@ -61,22 +61,47 @@ const { POST } = require("@/app/api/weather/route");
 
 describe("/api/weather POST", () => {
     describe("Successful requests", () => {
-        it("should return weather data for valid query", async () => {
+        it("should return weather data with forecast for valid query", async () => {
             const mockWeatherData = {
                 location: {
                     name: "London",
                     country: "United Kingdom",
                     lat: 51.52,
                     lon: -0.11,
+                    localtime: "2025-06-23 14:30",
                 },
                 current: {
-                    temp_c: 20,
+                    temperature: 20,
+                    feelsLike: 18,
                     condition: {
                         text: "Partly cloudy",
                         icon: "//cdn.weatherapi.com/weather/64x64/day/116.png",
+                        code: 1003,
                     },
                     humidity: 65,
-                    wind_kph: 15,
+                    windSpeed: 15,
+                    windDirection: "SW",
+                    pressure: 29.85,
+                    visibility: 10,
+                    uvIndex: 5,
+                },
+                forecast: {
+                    date: "2025-06-23",
+                    hour: [
+                        {
+                            time: "2025-06-23 15:00",
+                            temperature: 21,
+                            humidity: 60,
+                            feelsLike: 19,
+                            chance_of_rain: 10,
+                            chance_of_snow: 0,
+                            condition: {
+                                text: "Sunny",
+                                icon: "//cdn.weatherapi.com/weather/64x64/day/113.png",
+                                code: 1000,
+                            },
+                        },
+                    ],
                 },
             };
 
@@ -84,7 +109,7 @@ describe("/api/weather POST", () => {
             const mockRequest = createMockRequest(requestBody);
 
             mockValidateEnv.mockImplementation(() => {});
-            mockWeatherService.getCurrentWeather.mockResolvedValue(
+            mockWeatherService.getWeatherData.mockResolvedValue(
                 mockWeatherData
             );
 
@@ -98,26 +123,48 @@ describe("/api/weather POST", () => {
                 "weatherapi",
                 "api-key-for-testing"
             );
-            expect(mockWeatherService.getCurrentWeather).toHaveBeenCalledWith(
+            expect(mockWeatherService.getWeatherData).toHaveBeenCalledWith(
                 requestBody
             );
         });
 
-        it("should handle complex query parameters", async () => {
+        it("should handle lon, lat query parameters", async () => {
             const mockWeatherData = {
-                location: { name: "New York", country: "USA" },
-                current: { temp_c: 25, condition: { text: "Sunny" } },
+                location: {
+                    name: "New York",
+                    country: "USA",
+                    lat: 40.7128,
+                    lon: -74.006,
+                    localtime: "2025-06-23 09:30",
+                },
+                current: {
+                    temperature: 25,
+                    feelsLike: 27,
+                    condition: {
+                        text: "Sunny",
+                        icon: "//cdn.weatherapi.com/weather/64x64/day/113.png",
+                        code: 1000,
+                    },
+                    humidity: 55,
+                    windSpeed: 12,
+                    windDirection: "NW",
+                    pressure: 30.15,
+                    visibility: 16,
+                    uvIndex: 7,
+                },
+                forecast: {
+                    date: "2025-06-23",
+                    hour: [],
+                },
             };
 
             const requestBody = {
-                query: "New York",
-                units: "metric",
-                lang: "en",
+                query: "40.71428,-74.0064",
             };
             const mockRequest = createMockRequest(requestBody);
 
             mockValidateEnv.mockImplementation(() => {});
-            mockWeatherService.getCurrentWeather.mockResolvedValue(
+            mockWeatherService.getWeatherData.mockResolvedValue(
                 mockWeatherData
             );
 
@@ -126,7 +173,7 @@ describe("/api/weather POST", () => {
 
             expect(response.status).toBe(200);
             expect(responseData).toEqual(mockWeatherData);
-            expect(mockWeatherService.getCurrentWeather).toHaveBeenCalledWith(
+            expect(mockWeatherService.getWeatherData).toHaveBeenCalledWith(
                 requestBody
             );
         });
@@ -147,7 +194,7 @@ describe("/api/weather POST", () => {
                 error: "Query parameter is required",
             });
             expect(mockWeatherServiceFactory.create).not.toHaveBeenCalled();
-            expect(mockWeatherService.getCurrentWeather).not.toHaveBeenCalled();
+            expect(mockWeatherService.getWeatherData).not.toHaveBeenCalled();
         });
 
         it("should return 400 when query parameter is empty string", async () => {
@@ -200,7 +247,7 @@ describe("/api/weather POST", () => {
                 error: "WEATHER_API_KEY environment variable is required",
             });
             expect(mockWeatherServiceFactory.create).not.toHaveBeenCalled();
-            expect(mockWeatherService.getCurrentWeather).not.toHaveBeenCalled();
+            expect(mockWeatherService.getWeatherData).not.toHaveBeenCalled();
         });
     });
 
@@ -210,7 +257,7 @@ describe("/api/weather POST", () => {
             const mockRequest = createMockRequest(requestBody);
 
             mockValidateEnv.mockImplementation(() => {});
-            mockWeatherService.getCurrentWeather.mockRejectedValue(
+            mockWeatherService.getWeatherData.mockRejectedValue(
                 new Error("Weather API is unavailable")
             );
 
@@ -225,6 +272,24 @@ describe("/api/weather POST", () => {
                 "Weather API Error:",
                 expect.any(Error)
             );
+        });
+
+        it("should handle weather service timeout errors", async () => {
+            const requestBody = { query: "London" };
+            const mockRequest = createMockRequest(requestBody);
+
+            mockValidateEnv.mockImplementation(() => {});
+            mockWeatherService.getWeatherData.mockRejectedValue(
+                new Error("Request timeout")
+            );
+
+            const response = await POST(mockRequest);
+            const responseData = await response.json();
+
+            expect(response.status).toBe(500);
+            expect(responseData).toEqual({
+                error: "Request timeout",
+            });
         });
     });
 
@@ -247,7 +312,7 @@ describe("/api/weather POST", () => {
                 error: "Invalid JSON",
             });
             expect(mockWeatherServiceFactory.create).not.toHaveBeenCalled();
-            expect(mockWeatherService.getCurrentWeather).not.toHaveBeenCalled();
+            expect(mockWeatherService.getWeatherData).not.toHaveBeenCalled();
         });
     });
 
@@ -268,7 +333,7 @@ describe("/api/weather POST", () => {
             expect(responseData).toEqual({
                 error: "Invalid weather provider",
             });
-            expect(mockWeatherService.getCurrentWeather).not.toHaveBeenCalled();
+            expect(mockWeatherService.getWeatherData).not.toHaveBeenCalled();
         });
     });
 
@@ -276,18 +341,22 @@ describe("/api/weather POST", () => {
         it("should call weather service with correct environment variables", async () => {
             const requestBody = { query: "Tokyo" };
             const mockRequest = createMockRequest(requestBody);
-            const mockWeatherData = { location: { name: "Tokyo" } };
+            const mockWeatherData = {
+                location: { name: "Tokyo" },
+                current: { temperature: 25 },
+                forecast: { date: "2025-06-23", hour: [] },
+            };
 
             mockValidateEnv.mockImplementation(() => {});
-            mockWeatherService.getCurrentWeather.mockResolvedValue(
+            mockWeatherService.getWeatherData.mockResolvedValue(
                 mockWeatherData
             );
 
             await POST(mockRequest);
 
             expect(mockWeatherServiceFactory.create).toHaveBeenCalledWith(
-                "weatherapi", // from jest.setup.ts
-                "api-key-for-testing" // from jest.setup.ts
+                "weatherapi",
+                "api-key-for-testing"
             );
         });
     });
