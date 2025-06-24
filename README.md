@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WeatherWise
+
+## Overview
+
+WeatherWise is a project developed to get user's current location weather information.
+Users can search cities and countries in the search bar to get weather information of
+that location too.
+
+## Features
+
+1. Get geolocation from the browser and display weather information of the current location.
+2. If location permissions were denied, fall back to the default location defined in the env variables.
+3. Dynamic colour themes to match weather + Dark and light themes.
+4. Show friendly, motivational AI suggestions to make the best out of the day for that particular weather.
+5. Responsive user interface
 
 ## Getting Started
 
-First, run the development server:
+1. Create `.env.local` file in the root directory
+
+```aiignore
+WEATHER_API_KEY=
+WEATHER_PROVIDER=weatherapi
+
+LLM_API_KEY=            (optional)
+LLM_PROVIDER=openai     (optional)
+
+NEXT_PUBLIC_DEFAULT_LOCATION=Colombo
+```
+
+2. Then, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Useful commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Run unit tests
 
-## Learn More
+```aiignore
+npm run test
+```
 
-To learn more about Next.js, take a look at the following resources:
+2. Format all files to prettier formatting
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```aiignore
+npm run format
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Technical highlights
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Used strategy pattern to integrate weather api and openai APIs; therefore, it is easy to switch from any service providers.
+2. Queries are cached using custom hooks implemented with `tanstack queries`.
+3. Implemented unit and integrated tests using Jest.
+4. Added `Husky` pre-commit hook to run styling checks, TypeScript checks, linting checks, and run unit tests before each commit. Therefore, styles and conventions are preserved.
+5. Followed standard version control conventions for commit messages, branch names and when merging branches.
